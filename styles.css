@@ -1,0 +1,492 @@
+/* ======================================================
+   rebecca montedoro — portfolio
+   ====================================================== */
+
+:root {
+  --bg: #ffffff;
+  --ink: #2a2a2a;
+  --ink-soft: #444444;            /* bumped from #555 for AA contrast */
+  --hover-bg: #666666;
+  --link: #1a0dab;
+  --select-bg: #2a2a2a;
+  --select-fg: #ffffff;
+  --focus: #1a0dab;
+
+  /* Default: 🤚 (back-of-hand)  U+1F91A */
+  --cursor-default: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%A4%9A</text></svg>") 16 16, auto;
+
+  /* Hover: 👆 (backhand index up) U+1F446 */
+  --cursor-point:   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%91%86</text></svg>") 16 4, pointer;
+
+  /* Drag: 🤌 (pinched fingers) U+1F90C */
+  --cursor-grab:    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><text y='26' font-size='26'>%F0%9F%A4%8C</text></svg>") 16 16, grabbing;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+  -webkit-font-smoothing: antialiased;
+  cursor: var(--cursor-default);
+}
+
+body {
+  min-height: 100vh;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Selection */
+::selection      { background: var(--select-bg); color: var(--select-fg); }
+::-moz-selection { background: var(--select-bg); color: var(--select-fg); }
+
+/* Visible focus indicator for keyboard users */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* Visually hidden but available to assistive tech */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link — appears on focus only */
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 8px 12px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  z-index: 200;
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: var(--cursor-point);
+}
+a:visited { color: var(--link); }
+a:hover   { color: var(--link); }
+
+/* ============================
+   STICKY NAME
+   ============================ */
+.artist-name {
+  position: fixed;
+  top: 24px;
+  left: 4vw;
+  z-index: 60;
+  margin: 0;
+  font-weight: normal;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: transparent;
+  pointer-events: none;
+}
+
+/* ============================
+   STATEMENT
+   ============================ */
+.statement {
+  position: absolute;
+  top: 24px;
+  right: 4vw;
+  width: min(660px, 52vw);
+  z-index: 40;
+  background: transparent;
+}
+
+.statement p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.statement p + p {
+  margin-top: 0.85em;
+}
+
+/* Global pressing state — pinch cursor (🤌) on any mousedown anywhere */
+body.is-pressing,
+body.is-pressing * {
+  cursor: var(--cursor-grab) !important;
+}
+
+.links {
+  list-style: none;
+  display: flex;
+  gap: 1.4em;
+  margin-top: 14px;
+  font-size: 14px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.links a { pointer-events: auto; }
+
+.based-in {
+  color: #888888;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* ============================
+   GALLERY
+   ============================ */
+.gallery {
+  position: relative;
+  width: 100%;
+  height: 700vh;
+  margin-top: 260px;
+}
+
+/* .work is now a <button>, so reset button styles */
+.work {
+  position: absolute;
+  left: var(--left);
+  top: var(--top);
+  width: var(--w);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: var(--cursor-point);
+  display: block;
+}
+
+.work img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #f4f4f4;
+  cursor: var(--cursor-point);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none; /* clicks land on the button, not the img */
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.work img.loaded {
+  opacity: 1;
+}
+
+/* Caption: positioned ABSOLUTELY to the right-outside, baseline of last
+   line aligned to bottom of the image. The image is the only child with
+   intrinsic height, so anchoring the caption's baseline to the image's
+   bottom edge means: caption sits at right: -caption-width, with its
+   bottom matching the image's bottom. Since `.work` is the bounding box
+   (image height = work height because no other in-flow children), we
+   anchor the caption to the work's bottom-right edge, then translate it
+   outside. */
+.work-caption {
+  display: block;
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+/* While being dragged, raise z-index */
+.work.dragging {
+  z-index: 50;
+}
+.work.dragging,
+.work.dragging * {
+  cursor: var(--cursor-grab) !important;
+}
+
+body.is-dragging,
+body.is-dragging * {
+  cursor: var(--cursor-grab) !important;
+  user-select: none;
+}
+
+/* ============================
+   FOOTER
+   ============================ */
+.site-footer {
+  position: relative;
+  text-align: center;
+  padding: 60px 0 40px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+/* ============================
+   LIGHTBOX
+   ============================ */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: var(--hover-bg);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+  cursor: var(--cursor-default);
+}
+
+.lightbox.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox img {
+  max-width: 80vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  cursor: var(--cursor-default);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: transparent;
+  border: 0;
+  color: #ffffff;
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+  font-size: 32px;
+  line-height: 1;
+  padding: 4px 10px;
+  cursor: var(--cursor-point);
+  z-index: 2;
+}
+.lightbox-close:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.lightbox-caption {
+  position: absolute;
+  bottom: 24px;
+  right: 28px;
+  color: #ffffff;
+  font-size: 15px;
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+  letter-spacing: 0.02em;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ============================
+   REDUCED MOTION
+   ============================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lightbox { transition: none; }
+  .skip-link { transition: none; }
+  /* Don't fade images in — show immediately */
+  .work img { opacity: 1 !important; transition: none; }
+}
+
+/* ============================
+   MOBILE
+   ============================ */
+@media (max-width: 720px) {
+  .artist-name {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 14px 6vw 12px;
+    background: var(--bg);
+    z-index: 60;
+    pointer-events: auto;
+  }
+
+  .statement {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    padding: 8px 6vw 32px;
+  }
+
+  .gallery {
+    position: relative;
+    height: auto;
+    margin-top: 0;
+    padding: 6vh 6vw 12vh;
+    display: flex;
+    flex-direction: column;
+    gap: 14vh;
+  }
+
+  .work {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 78%;
+  }
+  .work:nth-child(odd)  { align-self: flex-start; }
+  .work:nth-child(even) { align-self: flex-end; }
+
+  /* On mobile there's not enough horizontal room — caption sits below
+     image (same as desktop now). */
+  .work-caption {
+    font-size: 14px;
+  }
+
+  .lightbox img {
+    max-width: 90vw;
+    max-height: 78vh;
+  }
+
+  .lightbox-caption {
+    bottom: 16px;
+    right: 16px;
+    font-size: 13px;
+  }
+
+  .lightbox-close {
+    top: 14px;
+    right: 16px;
+    font-size: 28px;
+  }
+}
+
+/* ============================
+   PRINT
+   Lay out as a clean grid for curators / archival use.
+   ============================ */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000 !important;
+    cursor: auto !important;
+    font-size: 10pt;
+  }
+
+  /* Hide UI chrome */
+  .skip-link,
+  .lightbox,
+  .lightbox-close,
+  .site-footer .links,
+  .artist-name { display: none !important; }
+
+  /* Print header — name + statement at top of first page */
+  body::before {
+    content: "rebecca montedoro";
+    display: block;
+    font-family: "Courier Prime", "Courier New", Courier, monospace;
+    font-size: 12pt;
+    margin-bottom: 0.25in;
+  }
+
+  .statement {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    margin: 0 0 0.4in 0;
+    padding: 0;
+  }
+  .statement p { font-size: 9pt; line-height: 1.4; }
+  .statement .links { display: none; }
+  .based-in { display: none; }
+
+  /* Reset gallery from absolute scatter to a clean grid */
+  .gallery {
+    position: relative !important;
+    height: auto !important;
+    margin-top: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 4in; /* uniform row height so captions align */
+    gap: 0.4in 0.3in;
+    page-break-before: auto;
+  }
+
+  .work {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important; /* ignore drag positions when printing */
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 0;
+    /* Flex so caption can be pushed to the bottom edge of the cell */
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .work img {
+    opacity: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100%;
+    max-height: calc(4in - 0.5in); /* leave room for caption at bottom */
+    object-fit: contain;
+    object-position: left top;
+    background: transparent !important;
+  }
+
+  .work-caption {
+    color: #000 !important;
+    font-size: 8.5pt;
+    margin-top: auto; /* push to the bottom of the cell — aligns across grid */
+    padding-top: 4pt;
+    text-align: left !important;
+    align-self: flex-start;
+  }
+
+  .site-footer {
+    margin-top: 0.4in;
+    padding: 0;
+    color: #000 !important;
+    font-size: 8.5pt;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: none;
+  }
+}
